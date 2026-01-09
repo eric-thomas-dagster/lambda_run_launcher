@@ -175,9 +175,9 @@ defs = dg.Definitions(jobs=[processing_job])
 |------------------|---------------|
 | Configuration-driven jobs | Python code execution |
 | Invoking existing Lambda functions | Custom pip dependencies |
-| Quick, lightweight operations | Long-running jobs (>15 min) |
+| Fast execution (<15 min) | Long-running jobs (>15 min) |
 | Event-driven workflows | Stateful computations |
-| Cost-sensitive workloads | Memory-intensive tasks (>10GB) |
+| Instant invocation (no cold start) | Memory-intensive tasks (>10GB) |
 | API integrations | GPU/specialized hardware |
 
 ### Deployment: Two Agents
@@ -273,19 +273,23 @@ instance:
       task_definition: dagster-run-worker
 ```
 
-### Cost Comparison
+### Performance Comparison
 
-**Single ECS Agent** (all Python jobs):
-- Agent: $15-20/month
-- Run workers: Variable, but always spinning up ECS tasks
+**Single ECS Agent** (all jobs):
+- Every job waits for ECS task to spin up (~30-60 seconds)
+- Resource contention during high-volume periods
+- Fixed concurrency limits
 
 **Multi-Agent Setup** (Lambda + ECS):
-- Lambda Agent: $15-20/month
-- ECS Agent: $15-20/month
-- Lambda invocations: ~$1-2/month for 1000 jobs
-- ECS tasks: Only for Python jobs that need it
+- Lambda jobs execute **instantly** (no task startup wait)
+- Unlimited concurrency for lightweight jobs
+- ECS only for jobs that actually need it
 
-**Net Result**: 30-50% cost savings by routing lightweight jobs to Lambda
+**Key Benefit**: Sub-second job startup for Lambda vs 30-60 second ECS task startup
+
+**Example Impact**: A job that runs every 5 minutes with 10-second execution:
+- **ECS**: 40-second total (30s startup + 10s execution) = 8 jobs/hour max
+- **Lambda**: 10-second total (instant startup + 10s execution) = 360 jobs/hour possible
 
 ### Default Queue Behavior
 
@@ -885,43 +889,48 @@ aws lambda get-function --function-name dagster-example-handler
 4. **No Code Execution**: Lambda functions must be pre-deployed
 5. **Async Status**: No built-in status tracking for async invocations
 
-## Cost Optimization
+## Performance & Scalability
 
-### Single Agent Setup (Lambda Only)
+### Why Lambda for Lightweight Jobs?
 
-If you only need Lambda invocations:
-- **Lambda Agent**: ~$15-20/month (ECS Fargate, always-on)
-- **Lambda Invocations**: ~$1-2/month (1000 jobs/day @ 30s avg)
-- **Total**: ~$15-25/month
+**Instant Execution**: Lambda functions are already running - no container startup time
+- **Lambda**: <1 second to start execution
+- **ECS Task**: 30-60 seconds to spin up container
 
-### Multi-Agent Setup (Recommended)
+**High Concurrency**: Lambda scales automatically
+- **Lambda**: Thousands of concurrent executions
+- **ECS Task**: Limited by cluster capacity
 
-For typical production (Lambda + Python):
-- **Lambda Agent**: ~$15-20/month (ECS Fargate)
-- **ECS Agent**: ~$15-20/month (ECS Fargate)
-- **Lambda Invocations**: ~$1-2/month (lightweight jobs)
-- **ECS Tasks**: Variable (only for Python jobs that need it)
-- **Total**: ~$35-45/month base + ECS task costs
+**Event-Driven**: Perfect for reactive workflows
+- Trigger on S3 events, API calls, schedule events
+- No waiting for containers to be ready
 
-**Cost Savings**: By routing 80% of lightweight jobs to Lambda instead of ECS tasks, save 30-50% vs all-ECS setup
+### Performance Comparison
 
-### Cost Comparison Example
+**Scenario**: API webhook that triggers data validation (5-second execution)
 
-**Scenario**: 1000 jobs/day (800 lightweight, 200 Python)
+| Approach | Startup Time | Execution Time | Total Time | Max Throughput |
+|----------|--------------|----------------|------------|----------------|
+| **ECS Task** | 30-60s | 5s | **35-65s** | ~60 jobs/hour |
+| **Lambda** | <1s | 5s | **~6s** | Thousands/hour |
 
-**All-ECS Setup**:
-- Agent: $20/month
-- 1000 ECS tasks/day: ~$150/month
-- **Total: ~$170/month**
+**Result**: Lambda is **6-10x faster** for lightweight jobs
 
-**Multi-Agent Setup**:
-- Lambda Agent: $20/month
-- ECS Agent: $20/month
-- 800 Lambda invocations/day: ~$2/month
-- 200 ECS tasks/day: ~$30/month
-- **Total: ~$72/month**
+### Real-World Use Cases
 
-**Savings: $98/month (58% reduction)**
+**Use Lambda Agent for**:
+- **Webhooks**: Respond to external events instantly
+- **Data validation**: Quick checks on incoming data
+- **Notifications**: Send alerts without delay
+- **Triggers**: Start longer processes quickly
+- **API integrations**: Call external services
+- **Status checks**: Poll for changes frequently
+
+**Use ECS Agent for**:
+- **Data processing**: Transform large datasets with pandas/spark
+- **ML training**: Long-running model training
+- **Batch jobs**: Process thousands of records
+- **Complex pipelines**: Multi-step Python workflows
 
 ## Advanced Topics
 
