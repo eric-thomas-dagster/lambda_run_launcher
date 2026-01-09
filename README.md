@@ -712,7 +712,7 @@ Suppose you have an existing Lambda that expects:
 }
 ```
 
-Dagster job:
+Dagster job with per-job payload configuration:
 ```python
 @dg.op(config_schema={
     "source_bucket": str,
@@ -722,16 +722,16 @@ Dagster job:
 def copy_files(context):
     pass
 
-@dg.job(tags={"lambda/function_name": "existing-s3-copy"})
+@dg.job(tags={
+    "lambda/function_name": "existing-s3-copy",
+    "lambda/payload_mode": "custom",
+    "lambda/payload_config_path": "ops.copy_files.config"
+})
 def copy_job():
     copy_files()
 ```
 
-Agent config:
-```yaml
-payload_mode: 'custom'
-payload_config_path: 'ops.copy_files.config'
-```
+This extracts just the op config and sends it to Lambda. No changes to agent configuration needed.
 
 **No Lambda code changes needed!** The launcher extracts and sends exactly what your Lambda expects.
 
@@ -1125,20 +1125,44 @@ instance:
 
 ### Payload Modes (Existing Lambda Functions)
 
+Configure payload mode at the agent level (applies to all jobs) or per-job via tags.
+
+**Agent-level configuration** (dagster.yaml):
 ```yaml
-# Full payload (default - new Lambda functions)
-payload_mode: 'full'
-
-# Just run_config (existing Lambda expecting Dagster config)
-payload_mode: 'config_only'
-
-# Just ops config (existing Lambda processing ops)
-payload_mode: 'ops_only'
-
-# Extract specific path (existing Lambda with custom format)
-payload_mode: 'custom'
-payload_config_path: 'ops.my_op.config'
+# Default for all jobs using this agent
+payload_mode: 'full'  # or 'config_only', 'ops_only', 'custom'
 ```
+
+**Per-job configuration** (recommended for multiple Lambda functions):
+```python
+# Job 1: New Lambda expecting full Dagster payload
+@dg.job(tags={
+    "lambda/function_name": "new-lambda",
+    "lambda/payload_mode": "full"  # Optional - full is default
+})
+def job1(): ...
+
+# Job 2: Existing Lambda expecting just run_config
+@dg.job(tags={
+    "lambda/function_name": "existing-lambda-1",
+    "lambda/payload_mode": "config_only"
+})
+def job2(): ...
+
+# Job 3: Existing Lambda expecting custom format
+@dg.job(tags={
+    "lambda/function_name": "existing-lambda-2",
+    "lambda/payload_mode": "custom",
+    "lambda/payload_config_path": "ops.my_op.config"
+})
+def job3(): ...
+```
+
+**Available modes:**
+- `full`: Complete payload with run metadata, config, env vars (default)
+- `config_only`: Just the run_config dictionary
+- `ops_only`: Just the ops config from run_config.ops
+- `custom`: Extract specific path using dot notation (requires `payload_config_path`)
 
 ### View Logs
 ```bash

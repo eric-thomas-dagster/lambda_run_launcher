@@ -36,13 +36,13 @@ def copy_files_op(context: dg.OpExecutionContext):
     return {"status": "initiated"}
 
 
-# Configure agent with payload_mode='ops_only' to send just the op config
-# dagster.yaml:
-#   run_launcher:
-#     config:
-#       payload_mode: 'ops_only'
-
-@dg.job(tags={"lambda/function_name": "existing-s3-copy-function"})
+# Configure per-job using tags to send just the op config
+@dg.job(
+    tags={
+        "lambda/function_name": "existing-s3-copy-function",
+        "lambda/payload_mode": "ops_only",
+    }
+)
 def copy_files_job():
     """Job using existing Lambda function with ops_only mode."""
     copy_files_op()
@@ -81,14 +81,14 @@ def api_call_op(context: dg.OpExecutionContext):
     return {"status": "called"}
 
 
-# Configure agent with payload_mode='custom' to extract specific config
-# dagster.yaml:
-#   run_launcher:
-#     config:
-#       payload_mode: 'custom'
-#       payload_config_path: 'ops.api_call_op.config'
-
-@dg.job(tags={"lambda/function_name": "existing-api-caller"})
+# Configure per-job using tags to extract specific config path
+@dg.job(
+    tags={
+        "lambda/function_name": "existing-api-caller",
+        "lambda/payload_mode": "custom",
+        "lambda/payload_config_path": "ops.api_call_op.config",
+    }
+)
 def api_call_job():
     """Job using existing Lambda with custom path extraction."""
     api_call_op()
@@ -122,13 +122,13 @@ def load_op(context: dg.OpExecutionContext):
     return {"loaded": True}
 
 
-# Configure agent with payload_mode='config_only'
-# dagster.yaml:
-#   run_launcher:
-#     config:
-#       payload_mode: 'config_only'
-
-@dg.job(tags={"lambda/function_name": "existing-etl-function"})
+# Configure per-job using tags to send config_only
+@dg.job(
+    tags={
+        "lambda/function_name": "existing-etl-function",
+        "lambda/payload_mode": "config_only",
+    }
+)
 def etl_job():
     """Job using existing Lambda expecting run_config."""
     transform_op()
@@ -239,6 +239,15 @@ def migration_step_1(context: dg.OpExecutionContext):
 # ============================================================================
 
 """
+IMPORTANT: The examples above show per-job payload configuration using tags.
+This is the RECOMMENDED approach when you have multiple Lambda functions with
+different payload formats.
+
+Agent-level configuration (shown below) is useful when ALL jobs use the same
+payload mode, but tags provide more flexibility.
+
+---
+
 # dagster.yaml for existing Lambda functions expecting ops config:
 
 instance:

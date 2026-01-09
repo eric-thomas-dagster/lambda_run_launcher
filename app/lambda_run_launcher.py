@@ -464,6 +464,81 @@ class LambdaRunLauncher(RunLauncher):
         # Priority 3: Use global default
         return self._default_invocation_type
 
+    def _get_payload_mode(self, context: LaunchRunContext) -> str:
+        """Determine payload mode for this run.
+
+        Priority order:
+        1. Run tag: 'lambda/payload_mode'
+        2. Job config: execution.config.payload_mode
+        3. Global default: payload_mode from launcher config
+        4. Hardcoded default: 'full'
+
+        Args:
+            context: Launch context
+
+        Returns:
+            Payload mode: 'full', 'config_only', 'ops_only', or 'custom'
+
+        Raises:
+            ValueError: If payload mode is invalid
+        """
+        run = context.dagster_run
+        valid_modes = ["full", "config_only", "ops_only", "custom"]
+
+        # Priority 1: Check run tags
+        payload_mode = run.tags.get("lambda/payload_mode")
+        if payload_mode:
+            if payload_mode not in valid_modes:
+                raise ValueError(
+                    f"Invalid payload_mode in tags: {payload_mode}. "
+                    f"Must be one of: {', '.join(valid_modes)}"
+                )
+            return payload_mode
+
+        # Priority 2: Check job config
+        job_config = run.run_config.get("execution", {}).get("config", {})
+        payload_mode = job_config.get("payload_mode")
+        if payload_mode:
+            if payload_mode not in valid_modes:
+                raise ValueError(
+                    f"Invalid payload_mode in config: {payload_mode}. "
+                    f"Must be one of: {', '.join(valid_modes)}"
+                )
+            return payload_mode
+
+        # Priority 3: Use global default
+        return self._payload_mode
+
+    def _get_payload_config_path(self, context: LaunchRunContext) -> Optional[str]:
+        """Determine payload config path for custom mode.
+
+        Priority order:
+        1. Run tag: 'lambda/payload_config_path'
+        2. Job config: execution.config.payload_config_path
+        3. Global default: payload_config_path from launcher config
+
+        Args:
+            context: Launch context
+
+        Returns:
+            Config path string (dot notation) or None
+        """
+        run = context.dagster_run
+
+        # Priority 1: Check run tags
+        config_path = run.tags.get("lambda/payload_config_path")
+        if config_path:
+            return config_path
+
+        # Priority 2: Check job config
+        job_config = run.run_config.get("execution", {}).get("config", {})
+        config_path = job_config.get("payload_config_path")
+        if config_path:
+            return config_path
+
+        # Priority 3: Use global default
+        return self._payload_config_path
+
     def _build_lambda_payload(self, context: LaunchRunContext) -> Dict[str, Any]:
         """Build the Lambda payload based on configured payload_mode.
 
@@ -473,6 +548,10 @@ class LambdaRunLauncher(RunLauncher):
         - 'ops_only': Just the ops config from run_config.ops
         - 'custom': Extract specific path from run_config
 
+        Payload mode can be configured at agent level or overridden per-job via:
+        - Run tag: 'lambda/payload_mode'
+        - Run tag: 'lambda/payload_config_path' (for custom mode)
+
         Args:
             context: Launch context
 
@@ -481,22 +560,31 @@ class LambdaRunLauncher(RunLauncher):
         """
         run = context.dagster_run
 
+        # Get payload mode for this run (checks tags, then config, then agent default)
+        payload_mode = self._get_payload_mode(context)
+
         # Build based on payload mode
-        if self._payload_mode == "full":
+        if payload_mode == "full":
             # Full comprehensive payload (default)
             return self._build_full_payload(context)
 
-        elif self._payload_mode == "config_only":
+        elif payload_mode == "config_only":
             # Just the run configuration
             return run.run_config
 
-        elif self._payload_mode == "ops_only":
+        elif payload_mode == "ops_only":
             # Just the ops configuration
             return run.run_config.get("ops", {})
 
-        elif self._payload_mode == "custom":
+        elif payload_mode == "custom":
             # Extract specific path from run_config
-            return self._extract_config_path(run.run_config, self._payload_config_path)
+            config_path = self._get_payload_config_path(context)
+            if not config_path:
+                raise DagsterLaunchFailedError(
+                    "payload_config_path is required when payload_mode is 'custom'. "
+                    "Set it in agent config, job config, or 'lambda/payload_config_path' tag."
+                )
+            return self._extract_config_path(run.run_config, config_path)
 
         else:
             # Fallback to full payload (should never happen due to validation)
