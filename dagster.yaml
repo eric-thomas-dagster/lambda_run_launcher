@@ -1,6 +1,6 @@
 # Dagster Cloud Agent Configuration with Lambda Run Launcher
 #
-# This configuration file is processed by entrypoint.py to expand environment variables.
+# The Dagster Cloud agent supports environment variable substitution.
 # Syntax: ${ENV_VAR_NAME} or ${ENV_VAR_NAME:default_value}
 
 instance:

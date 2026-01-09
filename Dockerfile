@@ -9,24 +9,21 @@ FROM dagster/dagster-cloud-agent:latest
 WORKDIR /app
 
 # Copy the custom launcher code
-COPY app/ /app/
+COPY app/ /app/app/
 
 # Copy agent configuration
 COPY dagster.yaml /app/dagster.yaml
-
-# Copy entrypoint script
-COPY entrypoint.py /app/entrypoint.py
 
 # Install additional dependencies if needed
 # (boto3 is typically already included in the agent image)
 RUN pip install --no-cache-dir boto3>=1.26.0
 
-# Set Python path to include /app
+# Set Python path to include /app so app.lambda_run_launcher is importable
 ENV PYTHONPATH=/app:${PYTHONPATH}
 ENV DAGSTER_HOME=/app
 
-# Make entrypoint executable
-RUN chmod +x /app/entrypoint.py
-
-# Use custom entrypoint
-ENTRYPOINT ["python", "/app/entrypoint.py"]
+# Use default dagster-cloud-agent entrypoint
+# The base image already handles:
+# - Reading dagster.yaml
+# - Environment variable substitution
+# - Starting the agent

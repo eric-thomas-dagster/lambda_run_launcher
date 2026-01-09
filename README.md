@@ -342,9 +342,8 @@ In Dagster Cloud UI:
 
 ```
 lambda_run_launcher/
-├── Dockerfile                      # Custom agent image
+├── Dockerfile                      # Custom agent image (extends dagster-cloud-agent)
 ├── dagster.yaml                    # Agent configuration
-├── entrypoint.py                   # Bootstrap script
 ├── requirements.txt                # Python dependencies
 ├── README.md                       # This file
 │
