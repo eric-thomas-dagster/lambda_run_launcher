@@ -23,7 +23,7 @@ instance:
 
   # Run launcher configuration
   run_launcher:
-    module: app.lambda_run_launcher
+    module: lambda_run_launcher
     class: LambdaRunLauncher
     config:
       # Default Lambda function to invoke if not specified per-job

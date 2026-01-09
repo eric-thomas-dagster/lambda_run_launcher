@@ -243,7 +243,7 @@ def migration_step_1(context: dg.OpExecutionContext):
 
 instance:
   run_launcher:
-    module: app.lambda_run_launcher
+    module: lambda_run_launcher
     class: LambdaRunLauncher
     config:
       payload_mode: 'ops_only'
@@ -256,7 +256,7 @@ instance:
 
 instance:
   run_launcher:
-    module: app.lambda_run_launcher
+    module: lambda_run_launcher
     class: LambdaRunLauncher
     config:
       payload_mode: 'custom'
@@ -270,7 +270,7 @@ instance:
 
 instance:
   run_launcher:
-    module: app.lambda_run_launcher
+    module: lambda_run_launcher
     class: LambdaRunLauncher
     config:
       payload_mode: 'config_only'
@@ -283,7 +283,7 @@ instance:
 
 instance:
   run_launcher:
-    module: app.lambda_run_launcher
+    module: lambda_run_launcher
     class: LambdaRunLauncher
     config:
       payload_mode: 'full'  # Default

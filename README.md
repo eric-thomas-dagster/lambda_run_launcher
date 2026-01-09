@@ -71,7 +71,7 @@ instance:
     queues:
       - lambda  # This agent processes code locations assigned to "lambda" queue
   run_launcher:
-    module: app.lambda_run_launcher
+    module: lambda_run_launcher
     class: LambdaRunLauncher
 ```
 
@@ -246,7 +246,7 @@ instance:
     queues:
       - lambda  # Only handle jobs tagged with queue: lambda
   run_launcher:
-    module: app.lambda_run_launcher
+    module: lambda_run_launcher
     class: LambdaRunLauncher
     config:
       default_function_name: ${DEFAULT_LAMBDA_FUNCTION}
@@ -475,7 +475,7 @@ instance:
   class: DagsterCloudAgentInstance
 
   run_launcher:
-    module: app.lambda_run_launcher
+    module: lambda_run_launcher
     class: LambdaRunLauncher
     config:
       default_function_name: ${DEFAULT_LAMBDA_FUNCTION:}
@@ -1100,7 +1100,7 @@ instance:
   agent:
     queues: [lambda]
   run_launcher:
-    module: app.lambda_run_launcher
+    module: lambda_run_launcher
     class: LambdaRunLauncher
 ```
 
