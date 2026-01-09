@@ -180,6 +180,56 @@ defs = dg.Definitions(jobs=[processing_job])
 | Instant invocation (no cold start) | Memory-intensive tasks (>10GB) |
 | API integrations | GPU/specialized hardware |
 
+### Alternative: Define Lambda Jobs in YAML (Components)
+
+Instead of writing Python code, you can define Lambda-backed assets and jobs purely in YAML using a custom Dagster component:
+
+**Create a component YAML file**:
+```yaml
+# components/my_lambda_asset.yaml
+component_type: components.lambda_component.LambdaFunctionComponent
+
+params:
+  lambda_config:
+    function_name: my-data-processor
+    invocation_type: Event
+    payload_mode: full
+
+  asset:
+    key: processed_data
+    description: Data processed by Lambda
+    config_schema:
+      input_path:
+        type: string
+      output_path:
+        type: string
+
+  schedule:
+    cron_schedule: "0 1 * * *"
+    execution_timezone: UTC
+```
+
+**Load components in your Dagster code**:
+```python
+import dagster as dg
+
+# Automatically loads all component YAML files
+defs = dg.Definitions.from_yaml_directory("components")
+```
+
+**Benefits of YAML Components**:
+- No Python code required for simple Lambda invocations
+- Easy for non-Python users to define jobs
+- Configuration lives separate from code
+- Great for standardized patterns
+
+**See**: `examples/component_examples/` for complete examples including:
+- Simple assets
+- Assets with dependencies and schedules
+- Partitioned assets (daily, weekly, static)
+- Multi-step jobs
+- Wrapping existing Lambda functions
+
 ### Deployment: Two Agents
 
 #### 1. Deploy Lambda Agent
@@ -765,13 +815,27 @@ Standard Lambda execution role plus any additional permissions your functions ne
 
 See the `examples/` directory for:
 
+### Python Examples
 - `dagster_job_example.py` - Various job patterns using Lambda launcher (new Lambda functions)
 - `lambda_handler.py` - Example Lambda function handler (new Lambda functions)
 - `existing_lambda_examples.py` - How to use existing Lambda functions with different payload modes
 - `existing_lambda_handler.py` - Example existing Lambda handlers and migration patterns
 - `multi_agent_example.py` - **Multi-agent setup with Lambda + ECS agents, queue routing, and job examples**
+
+### Configuration Examples
 - `dagster_cloud_lambda.yaml` - **Example dagster_cloud.yaml for Lambda code location (agent_queue: lambda)**
 - `dagster_cloud_ecs.yaml` - **Example dagster_cloud.yaml for ECS code location (agent_queue: ecs)**
+
+### Component Examples (YAML-Based)
+- `component_examples/` - **Dagster components for defining Lambda assets and jobs in pure YAML**
+  - `lambda_component.py` - Custom Lambda Function Component
+  - `lambda_asset_simple.yaml` - Basic Lambda-backed asset
+  - `lambda_asset_with_deps.yaml` - Asset with dependencies and schedule
+  - `lambda_asset_partitioned.yaml` - Daily partitioned asset
+  - `lambda_existing_function.yaml` - Wrapping existing Lambda with custom payload
+  - `lambda_job_multi_step.yaml` - Multi-step ETL job
+  - `lambda_static_partitions.yaml` - Asset with static partitions
+  - `dagster_project_example/` - Complete example project using components
 
 ## Deployment
 

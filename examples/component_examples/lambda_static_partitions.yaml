@@ -1,0 +1,40 @@
+# Lambda Asset with Static Partitions
+#
+# This creates an asset with static partitions (e.g., by region, customer, etc.)
+
+component_type: lambda_component.LambdaFunctionComponent
+
+params:
+  lambda_config:
+    function_name: regional-report-generator
+    invocation_type: Event
+    payload_mode: full
+
+  asset:
+    key: regional_reports
+    description: Generate reports for each region
+    group_name: reporting
+
+    # Static partitions for different regions
+    partitions_def: static
+    partition_keys:
+      - us-east
+      - us-west
+      - eu-central
+      - ap-southeast
+      - ap-northeast
+
+    config_schema:
+      report_type:
+        type: string
+        default: "monthly_summary"
+      include_details:
+        type: boolean
+        default: true
+      output_format:
+        type: string
+        default: "pdf"
+
+    metadata:
+      owner: reporting-team
+      distribution_list: "regional-managers@example.com"

@@ -1,0 +1,16 @@
+# Dagster Cloud Configuration for Lambda Jobs
+#
+# This routes the code location to the Lambda agent queue
+
+locations:
+  - location_name: lambda_jobs
+    code_source:
+      package_name: dagster_lambda_example
+
+    # Route to Lambda agent
+    agent_queue: lambda
+
+    # Optional: Build configuration if using containerized code locations
+    # build:
+    #   directory: .
+    #   registry: your-registry.dkr.ecr.us-east-1.amazonaws.com/lambda-jobs

@@ -1,0 +1,58 @@
+# Multi-Step Lambda Job
+#
+# This creates a job with multiple ops, all backed by the same Lambda function.
+# Useful for ETL pipelines where each step is handled by the same Lambda.
+
+component_type: lambda_component.LambdaFunctionComponent
+
+params:
+  lambda_config:
+    function_name: etl-pipeline-handler
+    invocation_type: RequestResponse  # Sync so steps run sequentially
+    payload_mode: ops_only  # Send just the ops config
+
+  job_name: daily_etl_pipeline
+  job_description: Daily ETL pipeline executed via Lambda
+
+  ops:
+    - name: extract_data
+      description: Extract data from source systems
+      config_schema:
+        source:
+          type: string
+          default: "postgres://prod-db"
+        query:
+          type: string
+        output_path:
+          type: string
+          default: "s3://staging/extracted/"
+
+    - name: transform_data
+      description: Transform and clean data
+      config_schema:
+        input_path:
+          type: string
+          default: "s3://staging/extracted/"
+        transformation_rules:
+          type: array
+          default: ["deduplicate", "normalize"]
+        output_path:
+          type: string
+          default: "s3://staging/transformed/"
+
+    - name: load_data
+      description: Load data into data warehouse
+      config_schema:
+        input_path:
+          type: string
+          default: "s3://staging/transformed/"
+        destination:
+          type: string
+          default: "snowflake://prod-warehouse"
+        table_name:
+          type: string
+
+  # Run every day at 3 AM
+  schedule:
+    cron_schedule: "0 3 * * *"
+    execution_timezone: UTC
