@@ -15,9 +15,9 @@ cp lambda_component.py your_dagster_project/components/
 Create a YAML file in your Dagster project (e.g., `components/my_lambda_asset.yaml`):
 
 ```yaml
-component_type: components.lambda_component.LambdaFunctionComponent
+type: components.lambda_component.LambdaFunctionComponent
 
-params:
+attributes:
   lambda_config:
     function_name: my-lambda-function
     invocation_type: Event

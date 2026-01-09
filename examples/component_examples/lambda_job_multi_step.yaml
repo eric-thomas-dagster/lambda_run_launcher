@@ -3,9 +3,9 @@
 # This creates a job with multiple ops, all backed by the same Lambda function.
 # Useful for ETL pipelines where each step is handled by the same Lambda.
 
-component_type: lambda_component.LambdaFunctionComponent
+type: components.lambda_component.LambdaFunctionComponent
 
-params:
+attributes:
   lambda_config:
     function_name: etl-pipeline-handler
     invocation_type: RequestResponse  # Sync so steps run sequentially

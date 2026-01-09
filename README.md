@@ -187,9 +187,9 @@ Instead of writing Python code, you can define Lambda-backed assets and jobs pur
 **Create a component YAML file**:
 ```yaml
 # components/my_lambda_asset.yaml
-component_type: components.lambda_component.LambdaFunctionComponent
+type: components.lambda_component.LambdaFunctionComponent
 
-params:
+attributes:
   lambda_config:
     function_name: my-data-processor
     invocation_type: Event

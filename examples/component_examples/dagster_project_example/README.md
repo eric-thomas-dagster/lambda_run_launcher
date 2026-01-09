@@ -36,9 +36,9 @@ See `components/daily_metrics.yaml` for an example. Create more components as ne
 
 ```yaml
 # components/my_lambda_asset.yaml
-component_type: components.lambda_component.LambdaFunctionComponent
+type: components.lambda_component.LambdaFunctionComponent
 
-params:
+attributes:
   lambda_config:
     function_name: my-lambda-function
     invocation_type: Event
@@ -82,9 +82,9 @@ Then navigate to http://localhost:3000
 ### Simple Asset
 
 ```yaml
-component_type: components.lambda_component.LambdaFunctionComponent
+type: components.lambda_component.LambdaFunctionComponent
 
-params:
+attributes:
   lambda_config:
     function_name: my-processor
     invocation_type: Event
@@ -102,9 +102,9 @@ params:
 ### Asset with Schedule
 
 ```yaml
-component_type: components.lambda_component.LambdaFunctionComponent
+type: components.lambda_component.LambdaFunctionComponent
 
-params:
+attributes:
   lambda_config:
     function_name: daily-report
     invocation_type: Event
@@ -122,9 +122,9 @@ params:
 ### Multi-Step Job
 
 ```yaml
-component_type: components.lambda_component.LambdaFunctionComponent
+type: components.lambda_component.LambdaFunctionComponent
 
-params:
+attributes:
   lambda_config:
     function_name: etl-handler
     invocation_type: RequestResponse
@@ -150,9 +150,9 @@ params:
 ### Existing Lambda Function
 
 ```yaml
-component_type: components.lambda_component.LambdaFunctionComponent
+type: components.lambda_component.LambdaFunctionComponent
 
-params:
+attributes:
   lambda_config:
     function_name: existing-lambda
     invocation_type: Event

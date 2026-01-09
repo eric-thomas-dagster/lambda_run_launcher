@@ -3,9 +3,9 @@
 # This creates a single asset backed by a Lambda function.
 # The Lambda receives the full Dagster payload (default).
 
-component_type: lambda_component.LambdaFunctionComponent
+type: components.lambda_component.LambdaFunctionComponent
 
-params:
+attributes:
   lambda_config:
     function_name: my-data-processor
     invocation_type: Event  # Async invocation

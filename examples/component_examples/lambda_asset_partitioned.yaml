@@ -2,9 +2,9 @@
 #
 # This creates a daily partitioned asset that processes data for each day.
 
-component_type: lambda_component.LambdaFunctionComponent
+type: components.lambda_component.LambdaFunctionComponent
 
-params:
+attributes:
   lambda_config:
     function_name: daily-data-processor
     invocation_type: Event
