@@ -1,0 +1,52 @@
+{
+  "family": "dagster-lambda-agent",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/DagsterLambdaAgentRole",
+  "containerDefinitions": [
+    {
+      "name": "dagster-agent",
+      "image": "YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/dagster-lambda-agent:latest",
+      "essential": true,
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/dagster-lambda-agent",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "agent"
+        }
+      },
+      "environment": [
+        {
+          "name": "AWS_REGION",
+          "value": "us-east-1"
+        },
+        {
+          "name": "AWS_DEFAULT_REGION",
+          "value": "us-east-1"
+        },
+        {
+          "name": "DEFAULT_INVOCATION_TYPE",
+          "value": "Event"
+        },
+        {
+          "name": "LAMBDA_SYNC_TIMEOUT",
+          "value": "300"
+        },
+        {
+          "name": "PAYLOAD_MODE",
+          "value": "full"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DAGSTER_CLOUD_AGENT_TOKEN",
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:YOUR_ACCOUNT_ID:secret:dagster/agent-token"
+        }
+      ]
+    }
+  ]
+}

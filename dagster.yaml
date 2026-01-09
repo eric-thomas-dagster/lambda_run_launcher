@@ -1,0 +1,77 @@
+# Dagster Cloud Agent Configuration with Lambda Run Launcher
+#
+# This configuration file is processed by entrypoint.py to expand environment variables.
+# Syntax: ${ENV_VAR_NAME} or ${ENV_VAR_NAME:default_value}
+
+instance:
+  class: DagsterCloudAgentInstance
+
+  # Agent configuration
+  agent:
+    # Agent queues for job routing
+    # IMPORTANT: If you run multiple agents (e.g., Lambda + ECS), configure
+    # queues to route jobs appropriately. Jobs tagged with "dagster/queue: lambda"
+    # will be processed by this agent.
+    queues:
+      - lambda  # This agent handles jobs tagged with queue: lambda
+
+    # Dagster Cloud organization and deployment
+    # These are typically provided by the Dagster Cloud agent token
+    # but can be explicitly set if needed
+    # organization_name: ${DAGSTER_CLOUD_ORG_NAME}
+    # deployment: ${DAGSTER_CLOUD_DEPLOYMENT_NAME}
+
+  # Run launcher configuration
+  run_launcher:
+    module: app.lambda_run_launcher
+    class: LambdaRunLauncher
+    config:
+      # Default Lambda function to invoke if not specified per-job
+      # Recommended: Set this to a default handler function
+      default_function_name: ${DEFAULT_LAMBDA_FUNCTION:}
+
+      # Default invocation type: 'Event' (async) or 'RequestResponse' (sync)
+      # Event (async) is recommended for most use cases
+      default_invocation_type: ${DEFAULT_INVOCATION_TYPE:Event}
+
+      # AWS region for Lambda invocations
+      # Should match the region where your Lambda functions are deployed
+      region_name: ${AWS_REGION:us-east-1}
+
+      # Environment variables to pass to Lambda functions
+      # These will be included in the payload sent to Lambda
+      env_vars:
+        - DAGSTER_CLOUD_ORG_ID
+        - DAGSTER_CLOUD_DEPLOYMENT_ID
+        - AWS_REGION
+        # Add any custom environment variables your Lambda functions need
+        # - CUSTOM_VAR_1
+        # - CUSTOM_VAR_2
+
+      # Timeout for synchronous invocations (seconds)
+      # Note: Lambda has a maximum execution time of 15 minutes (900 seconds)
+      sync_timeout: ${LAMBDA_SYNC_TIMEOUT:300}
+
+      # Payload format mode (default: 'full')
+      # Options:
+      #   - 'full': Complete payload with run metadata, config, env vars (best for new Lambda functions)
+      #   - 'config_only': Just the run_config dictionary (for existing Lambda functions expecting config)
+      #   - 'ops_only': Just the ops config (run_config.ops)
+      #   - 'custom': Extract specific path from run_config using payload_config_path
+      payload_mode: ${PAYLOAD_MODE:full}
+
+      # Path to extract in 'custom' mode (dot notation)
+      # Examples: 'ops.my_op.config', 'resources.database.config'
+      # Required when payload_mode is 'custom'
+      payload_config_path: ${PAYLOAD_CONFIG_PATH:}
+
+      # Additional boto3 invoke parameters (optional)
+      # invoke_kwargs:
+      #   LogType: 'Tail'  # Include execution logs in response
+
+  # Storage configuration
+  # The agent uses the default Dagster Cloud storage
+  # No local storage configuration needed
+
+# Logging configuration
+# Logs are sent to stdout/stderr and captured by ECS/CloudWatch

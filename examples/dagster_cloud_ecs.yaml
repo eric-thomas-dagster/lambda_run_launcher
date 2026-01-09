@@ -1,0 +1,30 @@
+# dagster_cloud.yaml for ECS Code Location
+#
+# Place this file in your code location directory (e.g., python_jobs/)
+# This configures the code location to route to the ECS agent.
+#
+# Reference: https://github.com/eric-thomas-dagster/serverless-hybrid-example
+
+locations:
+  - location_name: python_jobs
+    code_source:
+      package_name: python_jobs
+
+    # Route this code location to the ECS agent
+    # The ECS agent must be configured with queues: [ecs]
+    agent_queue: ecs
+
+    # Optional: Build configuration for containerized code locations
+    # build:
+    #   directory: ./python_jobs
+    #   registry: your-registry.dkr.ecr.us-east-1.amazonaws.com/python-jobs
+
+    # Optional: Additional configuration
+    # working_directory: /opt/dagster/app
+    # executable_path: /usr/local/bin/python
+
+    # Optional: Environment variables specific to this code location
+    # container_context:
+    #   env_vars:
+    #     - PANDAS_VERSION=2.0.0
+    #     - AWS_REGION=us-east-1

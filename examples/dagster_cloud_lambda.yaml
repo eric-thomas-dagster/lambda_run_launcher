@@ -1,0 +1,30 @@
+# dagster_cloud.yaml for Lambda Code Location
+#
+# Place this file in your code location directory (e.g., lambda_jobs/)
+# This configures the code location to route to the Lambda agent.
+#
+# Reference: https://github.com/eric-thomas-dagster/serverless-hybrid-example
+
+locations:
+  - location_name: lambda_jobs
+    code_source:
+      package_name: lambda_jobs
+
+    # Route this code location to the Lambda agent
+    # The Lambda agent must be configured with queues: [lambda]
+    agent_queue: lambda
+
+    # Optional: Build configuration if using containerized code locations
+    # build:
+    #   directory: ./lambda_jobs
+    #   registry: your-registry.dkr.ecr.us-east-1.amazonaws.com/lambda-jobs
+
+    # Optional: Additional configuration
+    # working_directory: /opt/dagster/app
+    # executable_path: /usr/local/bin/python
+
+    # Optional: Environment variables specific to this code location
+    # container_context:
+    #   env_vars:
+    #     - LAMBDA_FUNCTION_PREFIX=prod-
+    #     - AWS_REGION=us-east-1
